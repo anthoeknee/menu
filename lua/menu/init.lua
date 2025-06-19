@@ -81,6 +81,19 @@ M.open = function(items, opts)
   volt_events.add(buf)
 
   local close_post = function()
+    -- Close all menu windows and delete their buffers
+    for _, buf in ipairs(state.bufids) do
+      for _, win in ipairs(vim.api.nvim_list_wins()) do
+        if vim.api.nvim_win_get_buf(win) == buf then
+          pcall(vim.api.nvim_win_close, win, true)
+        end
+      end
+      pcall(vim.api.nvim_buf_delete, buf, { force = true })
+    end
+
+    -- Optionally clear namespace highlights
+    vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
+
     state.bufs = {}
     state.config = nil
     state.nested_menu = ""
@@ -90,7 +103,6 @@ M.open = function(items, opts)
       vim.schedule(function()
         local cursor_line = math.max(1, state.old_data.cursor[1])
         local cursor_col = math.max(0, state.old_data.cursor[2])
-
         pcall(api.nvim_win_set_cursor, state.old_data.win, { cursor_line, cursor_col })
       end)
     end
